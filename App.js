@@ -1,126 +1,154 @@
-import * as React from 'react';
-import { View, Text, Button, TextInput, Image } from 'react-native';
+//import * as React from 'react';
+import { View, Text, TextInput, Image, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
+import { LoginScreen } from "./Login";
+import React, { useState, useEffect } from 'react';
 
 
 
 
-function HomeScreen(props) {
+const axios = require("axios");
+
+
+export class HomeScreen extends React.Component {
+
+  _GOOGLE_URL = "https://www.googleapis.com/oauth2/v3/userinfo?access_token="
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      userInfo: null
+
+    }
+  }
+
+
+  ComponentDidMount() {
+    console.log("hola");
+    let token = this.props.route.params.auth.accessToken;
+    this.getUserInfo(token)
+  }
+
+  getUserInfo(token) {
+    console.log("User info");
+    console.log(token);
+    axios.get(_GOOGLE_URL + token).then(resp => {
+      console.log(resp.data);
+      this.setState({ userInfo: resp.data });
+    }).catch(error => {
+      console.log(error);
+    })
+  }
+
+  render() {
     return (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-            <Text>POKEDEX!</Text>
-            <Image source = {{uri: "https://media.tenor.com/images/39d6060576a516f1dd437eafccafbdb1/tenor.gif"}}
-                   style = {styles.img}
-                   />
 
-        </View>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <Text>POKEDEX!</Text>
+        <Image source={{ uri: "https://media.tenor.com/images/39d6060576a516f1dd437eafccafbdb1/tenor.gif" }}
+        />
+
+        <Text>Nombre: {this.state.userInfo?.name}</Text>
+        <Text>Email: {this.state.userInfo?.email}</Text>
+      </View>
+
+
+
     );
-}
 
-const styles ={
-    img : {
-        height : 400,
-        width : 400,
-        justifyContent : 'center',
-        alignItems : 'center'
-    }
+  }
 
 }
 
- class Pokedex extends React.Component {
 
-    
+const Pokemons = props => {
+  const [pokemons, setPokemons] = useState([]);
+  const [searchfeild, setSearchfeild] = useState('');
 
-    constructor(props) {
-      super(props);
-      this.state = {
-        name: '',
-        img: '#',
-      }
-    }
+  useEffect(() => {
+    fetchPokemons();
+  }, []);
 
-    
-  
-  
-    fetchJale = async () => {
-  
-      let res = await fetch(`https://pokeapi.co/api/v2/pokemon/${this.state.name}`)
-      let data = await res.json()
-  
-      console.log(data.name);
-      console.log(data.sprites.front_default)
-      this.setState({
-        img: data.sprites.front_default
-      })
-    }
-  
-  
-    handleName = event => {
-      this.setState({
-        name: event.target.value
-      })
-    }
-  
-  
-    handleSubmit = event => {
-      var evento = this.state.name;
-      console.log(evento)
-      alert(evento)
-      this.fetchJale()
-      this.setState({ name: '', })
-      event.preventDefault()
-    }
-  
-//
-    render() {
-      return (
-        <div>
-        <div>
-          <form onSubmit={this.handleSubmit}>
-            <label>Ingrese el Pokemon</label>
-            <br />
-            <br />
-            <input
-              type="text"
-              placeholder="Ingrese el nombre"
-              value={this.state.name}
-              onChange={this.handleName} />
-            <br />
-            <br />
-            <button type="submit"> Aceptar </button>
-          </form>
-          <br />
-          <br />
-          <img src={this.state.img} />
-        </div>
-      </div>
-      );
-    }
-}
+  const fetchPokemons = () => {
+    fetch('https://pokeapi.co/api/v2/pokemon?limit=500')
+      .then(response => response.json())
+      .then(pokemons => setPokemons(pokemons.results));
+  };
+
+  return (
+    <View>
+      <View style={styles.searchCont}>
+        <TextInput
+          style={styles.searchfeild}
+          placeholder="Buscar Pokemon"
+          onChangeText={value => setSearchfeild(value)}
+          value={searchfeild}
+        />
+      </View>
+      <ScrollView>
+        <View style={styles.container}>
+          {pokemons
+            .filter(pokemon =>
+              pokemon.name.toLowerCase().includes(searchfeild.toLowerCase())
+            )
+            .map((pokemon, index) => {
+              return (
+                <TouchableOpacity
+                  activeOpacity={0.5}
+                  key={index}
+                  style={styles.card}
+                >
+                  <Image
+                    style={{ width: 150, height: 150 }}
+                    source={{
+                      uri: `https://img.pokemondb.net/sprites/omega-ruby-alpha-sapphire/dex/normal/${pokemon.name
+                        }.png`,
+                    }}
+                  />
+                  <Text>{pokemon.name}</Text>
+                </TouchableOpacity>
+              );
+            })}
+        </View>
+      </ScrollView>
+    </View>
+  );
+};
+
+
 
 const Drawer = createDrawerNavigator();
 
 
 function App() {
 
-    return (
-        <NavigationContainer>
-            <Drawer.Navigator initialRouteName="Home">
-                <Drawer.Screen name="Home" component={HomeScreen} />
-                <Drawer.Screen name="Pokedex" component={Pokedex.bind(this)} />
-            </Drawer.Navigator>
-        </NavigationContainer>
-    );
+  return (
+    <NavigationContainer>
+      <Drawer.Navigator initialRouteName="Home">
+        <Drawer.Screen name="Login" component={LoginScreen} />
+        <Drawer.Screen name="Home" component={HomeScreen.bind(this)} />
+        <Drawer.Screen name="Pokedex" component={Pokemons.bind(this)} />
+
+
+      </Drawer.Navigator>
+    </NavigationContainer>
+  );
 }
+
+
 
 export default App;
 
-/* (POKEMONES A BUSCAR)
-bulbasaur
-ivysaur
-venusaur
-charmander
-charmeleon
-charizard
-squirtle*/
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    margin: 10,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center'
+  }
+
+}
+);
+

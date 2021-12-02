@@ -1,5 +1,6 @@
 {
   "expo": {
+    "scheme": "mycoolredirect",
     "name": "Proyecto-API",
     "slug": "Proyecto-API",
     "version": "1.0.0",
